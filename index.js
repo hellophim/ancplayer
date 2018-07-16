@@ -82,7 +82,21 @@ ANCMedia.prototype = {
         // push data to ancdata
         if (this.source && Array.isArray(this.source)) {
             this.source.forEach(function (episode, index) {
-                console.log(episode);
+
+                var epis = episode && episode.split(';');
+                if (epis && Array.isArray(epis)) {
+
+                    var ancitem = {};
+                    var list_server_name_pattern = new RegExp(list_server.join('|'));
+
+                    epis.forEach(function (item) {
+                        if (!/^http|https/.test(item) && !list_server_name_pattern.test(item)) {
+                            ancitem.name = item;
+                        }
+                    });
+                }
+
+                console.log(ancitem);
             });
         } else {
             new Error("Don't have data episode in HTML");
