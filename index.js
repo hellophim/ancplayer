@@ -45,11 +45,19 @@ ANCMedia.prototype = {
         set url(url) {
             this._url = url;
         },
+        get color() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        },
         get video() {
             return this._url;
         },
         get iframe() {
-            return '<iframe src="https://www.rapidvideo.com/v/FT73KJTN5R" scrolling="no" align="bottom" width="800px" height="300px" marginheight="200px" frameborder= 0 allow= autoplay encrypted-media allowfullscreen></iframe>';
+            return '<iframe width="560" height="315" src="https://www.youtube.com/embed/6NG4v2p2nug?rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
         }
     },
 
@@ -86,11 +94,14 @@ ANCMedia.prototype = {
                 var epis = episode && episode.split(';');
                 if (epis && Array.isArray(epis)) {
 
+                    var color_episode = this.template.color;
                     var list_server_name_pattern = new RegExp(list_server.join('|'));
 
                     // get episode name
                     epis.forEach(function (item, pos) {
-                        var ancitem = {};
+                        var ancitem = {
+                            color: color_episode
+                        };
                         if (!/^http|https/.test(item) && !list_server_name_pattern.test(item)) {
                             ancitem.name = item.toString().trim();
                         } else {
@@ -99,8 +110,8 @@ ANCMedia.prototype = {
                         }
                         // Get all link of episode 
                         if (/^http|https/.test(item) && list_server_name_pattern.test(item)) {
-                            ancitem.position = (pos + 1).toString().trim();
-                            ancitem.positionReal = pos.toString().trim();
+                            ancitem.position = (pos + 1).toString().trim() || 1;
+                            ancitem.positionReal = pos.toString().trim() || 0;
                             ancitem.data = item;
                             var serve = item.match(list_server_name_pattern);
                             if (serve.length && serve[0]) {
@@ -131,7 +142,7 @@ ANCMedia.prototype = {
 
             for (var episIndex in row.data) {
                 var epi = row.data[episIndex];
-                html += '<span class="anc_episode__name">{{name}}<span class="anc_episode__position">{{position}}</span></span>'.render(epi)
+                html += '<span class="anc_episode__name">{{name}}<span class="anc_episode__position" style="background-color: {{color}};">{{positionReal}}</span></span>'.render(epi)
             }
 
             html += '\
@@ -148,7 +159,7 @@ ANCMedia.prototype = {
         var videoArea = document.querySelector(this.default.VIDEO_SELECTOR);
         this.template.url = this.source;
         if (videoArea)
-            videoArea.innerHTML = this.template.video;
+            videoArea.innerHTML = this.template.iframe;
 
         var episodeArea = document.querySelector(this.default.EPISODE_SELECTOR);
         this.mapSource.bind(this)();

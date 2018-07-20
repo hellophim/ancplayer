@@ -31,16 +31,16 @@ ul.anc_server__episodes li.anc_server__item .anc_server__episode .anc_episode__n
     border-radius: 3px;
     text-align: center;
     cursor: pointer;
-    background: rgba(255, 235, 59, 0.27);
+    background: white;
     font-weight: 700;
 }
 
 ul.anc_server__episodes li.anc_server__item .anc_server__episode .anc_episode__name .anc_episode__position {
     position: absolute;
     right: 0px;
-    background: #607D8B;
+    background: #ff9090;
     color: #ffffff;
     padding: 3px 4px;
     top: 0px;
-    font-size: 13px;
+    font-size: 12px;
 }
