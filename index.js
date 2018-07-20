@@ -72,7 +72,7 @@ ANCMedia.prototype = {
 
         // define ancdata
         list_server.forEach(function (serve, index) {
-            this.ancdata[serve] = ({
+            this.ancdata[serve.toString().trim()] = ({
                 serverName: list_server_name[index].trim(),
                 server: serve,
                 data: []
@@ -92,15 +92,15 @@ ANCMedia.prototype = {
                     epis.forEach(function (item, pos) {
                         var ancitem = {};
                         if (!/^http|https/.test(item) && !list_server_name_pattern.test(item)) {
-                            ancitem.name = item;
+                            ancitem.name = item.toString().trim();
                         } else {
                             // If don't have name for episode, get index.
-                            ancitem.name = (index + 1);
+                            ancitem.name = (index + 1).toString().trim();
                         }
                         // Get all link of episode 
                         if (/^http|https/.test(item) && list_server_name_pattern.test(item)) {
-                            ancitem.position = (pos + 1);
-                            ancitem.positionReal = pos;
+                            ancitem.position = (pos + 1).toString().trim();
+                            ancitem.positionReal = pos.toString().trim();
                             ancitem.data = item;
                             var serve = item.match(list_server_name_pattern);
                             if (serve.length && serve[0]) {
@@ -114,15 +114,65 @@ ANCMedia.prototype = {
         } else {
             new Error("Don't have data episode in HTML");
         }
+
+        return this.ancdata;
+    },
+
+    buildEpisodeView: function () {
+        var html = '<ul class="anc_server__episodes">';
+        for (var serveIndex in this.ancdata) {
+
+            var row = this.ancdata[serveIndex];
+            html += '\
+            <li class="anc_server__item">\
+                <div class="anc_server__name"> {{serverName}} </div>\
+                    <div class="anc_server__episode"> \
+            '.render(row);
+
+            for (var episIndex in row.data) {
+                var epi = row.data[episIndex];
+                html += '<span class="anc_episode__name">{{name}}<span class="anc_episode__position">{{position}}</span></span>'.render(epi)
+            }
+
+            html += '\
+                    </div> \
+                </div> \
+            </li> \
+            ';
+        }
+        html += "</ul>"
+        return html;
     },
 
     deploy: (function () {
         var videoArea = document.querySelector(this.default.VIDEO_SELECTOR);
         this.template.url = this.source;
-        videoArea.innerHTML = this.template.video;
+        if (videoArea)
+            videoArea.innerHTML = this.template.video;
 
+        var episodeArea = document.querySelector(this.default.EPISODE_SELECTOR);
         this.mapSource.bind(this)();
+        if (episodeArea)
+            episodeArea.innerHTML = this.buildEpisodeView.bind(this)();
     })
 
 
+}
+
+// Utilization
+
+String.prototype.render = function () {
+
+    var otherData = (arguments && arguments[0]) || window;
+
+    function getValue(obj, query) {
+        var arr = query.split(".");
+        while (arr.length && (obj = obj[arr.shift()]));
+        return obj;
+    }
+
+    return this.replace(/{{.*?}}/g, function (variableName) {
+        var tempName = variableName.replace(/{|}/gi, "");
+        return getValue(otherData, tempName) || variableName;
+    });
 }

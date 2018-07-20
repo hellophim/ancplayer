@@ -1,0 +1,43 @@
+ul.anc_server__episodes {
+    background: #f9f9f9;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid #444;
+    li.anc_server__item {
+        list-style: none;
+        padding: 10px;
+        border-bottom: 1px dashed #ffffff;
+        div {
+            display: inline-block;
+        }
+        .anc_server__name {
+            width: 100px;
+            color: #3F51B5;
+            font-weight: bold;
+        }
+        .anc_server__episode {
+            .anc_episode__name {
+                padding: 2px 30px 2px 6px;
+                color: #607D8B;
+                border: 1px solid #bebebe;
+                margin: 0px 4px;
+                position: relative;
+                border-radius: 3px;
+                text-align: center;
+                cursor: pointer;
+                background: rgba(255, 235, 59, 0.27);
+                font-weight: 700;
+                .anc_episode__position {
+                    position: absolute;
+                    right: 0px;
+                    background: #607D8B;
+                    color: #ffffff;
+                    padding: 3px 4px;
+                    top: 0px;
+                    font-size: 13px;
+                }
+            }
+        }
+    }
+}
