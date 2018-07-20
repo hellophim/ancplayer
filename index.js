@@ -72,9 +72,9 @@ ANCMedia.prototype = {
 
         // define ancdata
         list_server.forEach(function (serve, index) {
-            this.ancdata.push({
+            this.ancdata[serve] = ({
+                serverName: list_server_name[index].trim(),
                 server: serve,
-                name: list_server_name[index],
                 data: []
             });
         }, this);
@@ -86,18 +86,31 @@ ANCMedia.prototype = {
                 var epis = episode && episode.split(';');
                 if (epis && Array.isArray(epis)) {
 
-                    var ancitem = {};
                     var list_server_name_pattern = new RegExp(list_server.join('|'));
 
-                    epis.forEach(function (item) {
+                    // get episode name
+                    epis.forEach(function (item, pos) {
+                        var ancitem = {};
                         if (!/^http|https/.test(item) && !list_server_name_pattern.test(item)) {
                             ancitem.name = item;
+                        } else {
+                            // If don't have name for episode, get index.
+                            ancitem.name = (index + 1);
                         }
-                    });
+                        // Get all link of episode 
+                        if (/^http|https/.test(item) && list_server_name_pattern.test(item)) {
+                            ancitem.position = (pos + 1);
+                            ancitem.positionReal = pos;
+                            ancitem.data = item;
+                            var serve = item.match(list_server_name_pattern);
+                            if (serve.length && serve[0]) {
+                                this.ancdata[serve[0]].data.push(ancitem);
+                            }
+                        }
+                    }, this);
                 }
 
-                console.log(ancitem);
-            });
+            }, this);
         } else {
             new Error("Don't have data episode in HTML");
         }
