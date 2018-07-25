@@ -17,6 +17,7 @@ ANCMedia.prototype = {
         width: '350px',
 
         // const setting
+        "DEFAULT_VIDEO": "",
         "VIDEO_SELECTOR": '#ancVideo',
         "EPISODE_SELECTOR": '#ancEpisode',
         "LIST_SERVER": 'youtube.com,rapidvideo.com',
@@ -53,11 +54,18 @@ ANCMedia.prototype = {
             }
             return color;
         },
+        get defaultImage() {
+            return 'Video not found...';
+        },
         get video() {
-            return this._url;
+            if (this._url)
+                return this._url;
+            else return this.defaultImage;
         },
         get iframe() {
-            return '<iframe width="560" height="315" src="https://www.youtube.com/embed/6NG4v2p2nug?rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+            if (this._url)
+                return '<iframe width="560" height="315" src="{{_url}}?rel=0&amp;controls=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>'.render(this);
+            else return this.defaultImage;
         }
     },
 
@@ -97,22 +105,30 @@ ANCMedia.prototype = {
                     var color_episode = this.template.color;
                     var list_server_name_pattern = new RegExp(list_server.join('|'));
 
+                    // Get first item set name
+                    var firstEpi = epis[0],
+                        name_episode = (index + 1).toString().trim();
+
+                    var isHaveEpiName = firstEpi && !/^http|https/.test(firstEpi) && !list_server_name_pattern.test(firstEpi);
+                    if (isHaveEpiName) {
+                        name_episode = epis.shift().trim();
+                    }
+
+                    var ANCItem = function () {
+                        return {
+                            color: color_episode,
+                            name: name_episode
+                        }
+                    }
+
                     // get episode name
                     epis.forEach(function (item, pos) {
-                        var ancitem = {
-                            color: color_episode
-                        };
-                        if (!/^http|https/.test(item) && !list_server_name_pattern.test(item)) {
-                            ancitem.name = item.toString().trim();
-                        } else {
-                            // If don't have name for episode, get index.
-                            ancitem.name = (index + 1).toString().trim();
-                        }
                         // Get all link of episode 
                         if (/^http|https/.test(item) && list_server_name_pattern.test(item)) {
-                            ancitem.position = (pos + 1).toString().trim() || 1;
-                            ancitem.positionReal = pos.toString().trim() || 0;
-                            ancitem.data = item;
+                            var ancitem = new ANCItem();
+                            ancitem.stringId = new Date().getTime().toString();
+                            ancitem.position = (pos + 1).toString().trim();
+                            ancitem.data = item.toString().trim();
                             var serve = item.match(list_server_name_pattern);
                             if (serve.length && serve[0]) {
                                 this.ancdata[serve[0]].data.push(ancitem);
@@ -125,7 +141,7 @@ ANCMedia.prototype = {
         } else {
             new Error("Don't have data episode in HTML");
         }
-
+        console.log(this.ancdata)
         return this.ancdata;
     },
 
@@ -142,7 +158,7 @@ ANCMedia.prototype = {
 
             for (var episIndex in row.data) {
                 var epi = row.data[episIndex];
-                html += '<span class="anc_episode__name">{{name}}<span class="anc_episode__position" style="background-color: {{color}};">{{positionReal}}</span></span>'.render(epi)
+                html += '<span class="anc_episode__name">{{name}}<span class="anc_episode__position" style="background-color: {{color}};"> {{position}} </span></span>'.render(epi)
             }
 
             html += '\
@@ -155,14 +171,19 @@ ANCMedia.prototype = {
         return html;
     },
 
+    buildPlayer: function (paramsUrl) {
+        this.template.url = paramsUrl;
+        return this.template.iframe;
+    },
+
     deploy: (function () {
         var videoArea = document.querySelector(this.default.VIDEO_SELECTOR);
-        this.template.url = this.source;
         if (videoArea)
             videoArea.innerHTML = this.template.iframe;
 
         var episodeArea = document.querySelector(this.default.EPISODE_SELECTOR);
         this.mapSource.bind(this)();
+        this.buildPlayer.bind(this)("https://www.youtube.com/embed/6NG4v2p2nug");
         if (episodeArea)
             episodeArea.innerHTML = this.buildEpisodeView.bind(this)();
     })
@@ -176,14 +197,8 @@ String.prototype.render = function () {
 
     var otherData = (arguments && arguments[0]) || window;
 
-    function getValue(obj, query) {
-        var arr = query.split(".");
-        while (arr.length && (obj = obj[arr.shift()]));
-        return obj;
-    }
-
-    return this.replace(/{{.*?}}/g, function (variableName) {
-        var tempName = variableName.replace(/{|}/gi, "");
-        return getValue(otherData, tempName) || variableName;
+    return this.replace(/({{.*?}})/g, function (variableName) {
+        var tempName = variableName.replace(/{{|}}/gi, "");
+        return eval("otherData." + tempName) || variableName;
     });
 }
