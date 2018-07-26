@@ -141,11 +141,13 @@ ANCMedia.prototype = {
         } else {
             new Error("Don't have data episode in HTML");
         }
-        console.log(this.ancdata)
+
         return this.ancdata;
     },
 
     buildEpisodeView: function () {
+        var episodeArea = document.querySelector(this.default.EPISODE_SELECTOR);
+
         var html = '<ul class="anc_server__episodes">';
         for (var serveIndex in this.ancdata) {
 
@@ -158,7 +160,7 @@ ANCMedia.prototype = {
 
             for (var episIndex in row.data) {
                 var epi = row.data[episIndex];
-                html += '<span class="anc_episode__name">{{name}}<span class="anc_episode__position" style="background-color: {{color}};"> {{position}} </span></span>'.render(epi)
+                html += '<span class="anc_event_open anc_episode__name" data-index="' + episIndex + '" data-server="' + serveIndex + '">{{name}}<span class="anc_episode__position" style="background-color: {{color}};"> {{position}} </span></span>'.render(epi)
             }
 
             html += '\
@@ -167,25 +169,37 @@ ANCMedia.prototype = {
             </li> \
             ';
         }
-        html += "</ul>"
-        return html;
+        html += "</ul>";
+
+        if (episodeArea)
+            episodeArea.innerHTML = html;
     },
 
-    buildPlayer: function (paramsUrl) {
+    buildPlayer: function (index, server) {
+        var paramsUrl = (this.ancdata[server].data)[index].data;
+        console.log(paramsUrl)
         this.template.url = paramsUrl;
-        return this.template.iframe;
-    },
-
-    deploy: (function () {
         var videoArea = document.querySelector(this.default.VIDEO_SELECTOR);
         if (videoArea)
             videoArea.innerHTML = this.template.iframe;
+    },
 
-        var episodeArea = document.querySelector(this.default.EPISODE_SELECTOR);
+    deploy: (function () {
+
+        var vm = this;
         this.mapSource.bind(this)();
-        this.buildPlayer.bind(this)("https://www.youtube.com/embed/6NG4v2p2nug");
-        if (episodeArea)
-            episodeArea.innerHTML = this.buildEpisodeView.bind(this)();
+        this.buildPlayer.bind(this)(0, "youtube.com");
+        this.buildEpisodeView.bind(this)();
+
+        var selectorEpisode = document.querySelectorAll(".anc_event_open");
+        selectorEpisode.forEach(function (child) {
+            child.addEventListener("click", function (e) {
+                var elementAttr = e.target.attributes;
+                var index = elementAttr["data-index"].value;
+                var serve = elementAttr["data-server"].value;
+                vm.buildPlayer.bind(vm)(index, serve);
+            });
+        });
     })
 
 
