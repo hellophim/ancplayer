@@ -20,8 +20,9 @@ ANCMedia.prototype = {
         "DEFAULT_VIDEO": "",
         "VIDEO_SELECTOR": '#ancVideo',
         "EPISODE_SELECTOR": '#ancEpisode',
-        "LIST_SERVER": 'youtube.com,rapidvideo.com',
-        "LIST_SERVER_NAME": 'Tube, Rapid'
+        "LIST_SERVER": 'youtube.com,rapidvideo.com'.split(','),
+        "LIST_SERVER_NAME": 'Tube, Rapid'.split(','),
+        "LIST_SERVER_PLAYER": 'iframe,video'.split(',')
 
     },
 
@@ -82,9 +83,19 @@ ANCMedia.prototype = {
         return source && source.split('|');
     },
 
+    filterUrl: function (url) {
+        if (/youtube\.com/.test(url)) {
+            var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
+            var match = url.match(regExp);
+            if (match && match[7].length == 11) {
+                return "https://www.youtube.com/embed/" + match[7];
+            }
+        }
+    },
+
     mapSource: function () {
-        var list_server = this.default && this.default.LIST_SERVER && this.default.LIST_SERVER.split(',');
-        var list_server_name = this.default && this.default.LIST_SERVER_NAME && this.default.LIST_SERVER_NAME.split(',');
+        var list_server = this.default && this.default.LIST_SERVER && this.default.LIST_SERVER;
+        var list_server_name = this.default && this.default.LIST_SERVER_NAME && this.default.LIST_SERVER_NAME;
 
         // define ancdata
         list_server.forEach(function (serve, index) {
@@ -176,12 +187,15 @@ ANCMedia.prototype = {
     },
 
     buildPlayer: function (index, server) {
+
+        var indexServer = this.default.LIST_SERVER.indexOf(server);
+        var nameTemplate = this.default.LIST_SERVER_PLAYER[indexServer];
         var paramsUrl = (this.ancdata[server].data)[index].data;
-        console.log(paramsUrl)
-        this.template.url = paramsUrl;
+
+        this.template.url = this.filterUrl(paramsUrl);
         var videoArea = document.querySelector(this.default.VIDEO_SELECTOR);
         if (videoArea)
-            videoArea.innerHTML = this.template.iframe;
+            videoArea.innerHTML = this.template[nameTemplate];
     },
 
     deploy: (function () {
